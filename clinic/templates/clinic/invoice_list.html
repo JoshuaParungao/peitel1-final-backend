@@ -5,7 +5,14 @@
 <div class="card invoices-card">
     <div class="card-header">
         <h2>Invoices</h2>
-        <a class="btn create-btn" href="{% url 'clinic:invoice_create' %}">Create Invoice</a>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <a class="btn create-btn" href="{% url 'clinic:invoice_create' %}">Create Invoice</a>
+            <form method="get" action="{% url 'clinic:sales_summary_pdf' %}" target="_blank" style="display:flex; gap:6px; align-items:center;">
+                <input type="date" name="start" style="height:32px;" />
+                <input type="date" name="end" style="height:32px;" />
+                <button type="submit" class="btn">Download All (Summary PDF)</button>
+            </form>
+        </div>
     </div>
 
     <table class="table invoices-table">
@@ -27,6 +34,7 @@
                 <td>₱{{ invoice.total_amount }}</td>
                 <td class="actions-cell">
                     <a class="btn view-btn small" href="{% url 'clinic:invoice_detail' invoice.pk %}">View</a>
+                    <a class="btn primary-btn small" href="{% url 'clinic:invoice_pdf' invoice.pk %}" target="_blank">Download PDF</a>
                     <a class="btn delete-btn small" href="{% url 'clinic:invoice_delete' invoice.pk %}" onclick="return confirm('Archive this invoice?')">Archive</a>
                 </td>
             </tr>

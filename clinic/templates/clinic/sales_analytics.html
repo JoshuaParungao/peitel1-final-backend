@@ -6,7 +6,31 @@
     <div class="action-buttons">
         <a href="{{ back_url }}" class="btn secondary-btn">Back to Dashboard</a>
         <a href="{% url 'clinic:staff_list' %}" class="btn info-btn">View Staff List</a>
+        <div style="margin-left:12px; display:flex; gap:8px; align-items:center;">
+            <form id="exportForm" method="get" style="display:flex; gap:8px; align-items:center;">
+                <label style="font-size:12px;">Start</label>
+                <input type="date" name="start" />
+                <label style="font-size:12px;">End</label>
+                <input type="date" name="end" />
+                <button type="button" class="btn" data-url="{% url 'clinic:sales_summary_csv' %}" onclick="submitExport(this.getAttribute('data-url'))">Export CSV</button>
+                <button type="button" class="btn" data-url="{% url 'clinic:sales_summary_pdf' %}" onclick="submitExport(this.getAttribute('data-url'), true)">Export PDF</button>
+                <button type="button" class="btn" data-url="{% url 'clinic:sales_summary_xlsx' %}" onclick="submitExport(this.getAttribute('data-url'))">Export XLSX</button>
+            </form>
+        </div>
     </div>
+
+    <script>
+        function submitExport(actionUrl, openNewTab) {
+            var form = document.getElementById('exportForm');
+            form.action = actionUrl;
+            if (openNewTab) {
+                form.target = '_blank';
+            } else {
+                form.removeAttribute('target');
+            }
+            form.submit();
+        }
+    </script>
 
     <!-- Sales Overview Cards -->
     <div class="sales-overview">

@@ -1,4 +1,18 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
+import io
+import csv
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from django.conf import settings
+from django.contrib.staticfiles import finders
+from reportlab.lib import colors
+from reportlab.lib.units import mm
+try:
+    import openpyxl
+    from openpyxl.utils import get_column_letter
+except Exception:
+    openpyxl = None
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.models import User
@@ -191,6 +205,302 @@ def invoice_delete(request, pk):
     invoice.is_archived = True
     invoice.save()
     return redirect('clinic:invoices_list')
+
+
+@superuser_required
+def invoice_pdf(request, pk):
+    """Generate a PDF for a single invoice (download)."""
+    invoice = get_object_or_404(Invoice, pk=pk)
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    x = 40
+    y = height - 40
+    p.setFont('Helvetica-Bold', 16)
+    p.drawString(x, y, f"Invoice #{invoice.pk}")
+    p.setFont('Helvetica', 10)
+    y -= 24
+    p.drawString(x, y, f"Patient: {invoice.patient.first_name} {invoice.patient.last_name}")
+    y -= 14
+    p.drawString(x, y, f"Date: {invoice.date_created.strftime('%Y-%m-%d %H:%M')}")
+    y -= 20
+
+    # Table header
+    p.setFont('Helvetica-Bold', 11)
+    p.drawString(x, y, 'Item')
+    p.drawString(x+260, y, 'Price')
+    p.drawString(x+340, y, 'Qty')
+    p.drawString(x+400, y, 'Total')
+    y -= 14
+    p.setFont('Helvetica', 10)
+
+    total = 0
+    for item in invoice.items.all():
+        if y < 80:
+            p.showPage()
+            y = height - 40
+        p.drawString(x, y, item.service_name_at_time)
+        p.drawRightString(x+320, y, f"₱{float(item.price_at_time):,.2f}")
+        p.drawRightString(x+390, y, str(item.quantity))
+        line_total = float(item.price_at_time) * item.quantity
+        p.drawRightString(x+480, y, f"₱{line_total:,.2f}")
+        total += line_total
+        y -= 14
+
+    y -= 8
+    p.setFont('Helvetica-Bold', 12)
+    p.drawString(x, y, f"Total: ₱{total:,.2f}")
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    resp = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    # Use inline so browsers open the PDF directly allowing printing (instead of forcing download)
+    resp['Content-Disposition'] = f'inline; filename="invoice_{invoice.pk}.pdf"'
+    return resp
+
+
+@superuser_required
+def sales_summary_csv(request):
+    """Export invoices (not archived) as CSV with optional date-range filter and a summary row.
+    Query params: ?start=YYYY-MM-DD&end=YYYY-MM-DD
+    """
+    invoices = Invoice.objects.filter(is_archived=False).order_by('date_created')
+    # date range filter
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+    from datetime import date
+    try:
+        if start:
+            start_date = date.fromisoformat(start)
+            invoices = invoices.filter(date_created__date__gte=start_date)
+        if end:
+            end_date = date.fromisoformat(end)
+            invoices = invoices.filter(date_created__date__lte=end_date)
+    except Exception:
+        # ignore parse errors and return full set
+        pass
+
+    total_sales = 0
+    total_count = invoices.count()
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    # header
+    writer.writerow(['Invoice ID', 'Patient', 'Date', 'Is Paid', 'Created By', 'Total Amount'])
+    for inv in invoices:
+        amount = sum(float(it.price_at_time) * it.quantity for it in inv.items.all())
+        total_sales += amount
+        writer.writerow([inv.pk, f"{inv.patient.first_name} {inv.patient.last_name}", inv.date_created.strftime('%Y-%m-%d %H:%M'), 'Yes' if inv.is_paid else 'No', (inv.created_by.get_full_name() if inv.created_by else ''), f"{amount:.2f}"])
+
+    # summary row
+    writer.writerow([])
+    writer.writerow(['TOTAL_INVOICES', total_count])
+    writer.writerow(['TOTAL_SALES', f"{total_sales:.2f}"])
+
+    resp = HttpResponse(buffer.getvalue(), content_type='text/csv')
+    filename = 'sales_summary'
+    if start or end:
+        filename += f"_{start or ''}_{end or ''}"
+    resp['Content-Disposition'] = f'attachment; filename="{filename}.csv"'
+    return resp
+
+
+@superuser_required
+def sales_summary_pdf(request):
+    """Generate a PDF summarizing sales (list + totals) with optional date-range filter.
+    Query params: ?start=YYYY-MM-DD&end=YYYY-MM-DD
+    """
+    invoices = Invoice.objects.filter(is_archived=False).order_by('date_created')
+    # date range filter
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+    from datetime import date
+    try:
+        if start:
+            start_date = date.fromisoformat(start)
+            invoices = invoices.filter(date_created__date__gte=start_date)
+        if end:
+            end_date = date.fromisoformat(end)
+            invoices = invoices.filter(date_created__date__lte=end_date)
+    except Exception:
+        pass
+
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    margin_x = 20 * mm
+    margin_y = 20 * mm
+    usable_width = width - 2 * margin_x
+    x = margin_x
+    y = height - margin_y
+
+    # Header: optionally draw logo
+    clinic_name = getattr(settings, 'CLINIC_NAME', 'Dental Clinic')
+    clinic_addr = getattr(settings, 'CLINIC_ADDRESS', '')
+    logo_path = None
+    try:
+        logo_path = finders.find('clinic/img/logo.png') or finders.find('clinic/logo.png')
+    except Exception:
+        logo_path = None
+    if logo_path:
+        try:
+            img_w = 30 * mm
+            img_h = 30 * mm
+            p.drawImage(logo_path, x, y - img_h, width=img_w, height=img_h, preserveAspectRatio=True, mask='auto')
+        except Exception:
+            logo_path = None
+
+    # Clinic header text
+    header_x = x + (35 * mm if logo_path else 0)
+    p.setFont('Helvetica-Bold', 14)
+    p.drawString(header_x, y - 6, clinic_name)
+    p.setFont('Helvetica', 9)
+    p.drawString(header_x, y - 22, clinic_addr)
+    y -= (40 if logo_path else 24)
+
+    # Title and date range info
+    p.setFont('Helvetica-Bold', 12)
+    p.drawString(x, y, 'Sales Summary')
+    if start or end:
+        range_text = 'Range:'
+        if start:
+            range_text += f' {start}'
+        if end:
+            range_text += f' to {end}'
+        p.setFont('Helvetica', 9)
+        p.drawString(x + 120 * mm, y, range_text)
+    y -= 12
+
+    # Table header
+    table_x = x
+    col_invoice = table_x
+    col_patient = table_x + 30 * mm
+    col_date = table_x + 120 * mm
+    col_total = table_x + usable_width - 30 * mm
+
+    p.setFont('Helvetica-Bold', 10)
+    p.drawString(col_invoice, y, 'Invoice')
+    p.drawString(col_patient, y, 'Patient')
+    p.drawString(col_date, y, 'Date')
+    p.drawRightString(col_total + 30 * mm, y, 'Total')
+    y -= 8
+
+    # draw line under header
+    p.setStrokeColor(colors.grey)
+    p.setLineWidth(0.5)
+    p.line(table_x, y, table_x + usable_width, y)
+    y -= 8
+
+    p.setFont('Helvetica', 9)
+    total_sales = 0
+    for inv in invoices:
+        if y < margin_y + 30:
+            p.showPage()
+            y = height - margin_y
+            # redraw header on new page
+            p.setFont('Helvetica-Bold', 12)
+            p.drawString(x, y, 'Sales Summary (continued)')
+            y -= 14
+            p.setFont('Helvetica-Bold', 10)
+            p.drawString(col_invoice, y, 'Invoice')
+            p.drawString(col_patient, y, 'Patient')
+            p.drawString(col_date, y, 'Date')
+            p.drawRightString(col_total + 30 * mm, y, 'Total')
+            y -= 12
+
+        amount = sum(float(it.price_at_time) * it.quantity for it in inv.items.all())
+        total_sales += amount
+        # draw row
+        p.setFillColor(colors.black)
+        p.drawString(col_invoice, y, str(inv.pk))
+        patient_name = f"{inv.patient.first_name} {inv.patient.last_name}"
+        p.drawString(col_patient, y, patient_name[:40])
+        p.drawString(col_date, y, inv.date_created.strftime('%Y-%m-%d'))
+        p.drawRightString(col_total + 30 * mm, y, f"₱{amount:,.2f}")
+        y -= 12
+
+    # footer totals
+    y -= 8
+    p.setStrokeColor(colors.grey)
+    p.line(table_x, y, table_x + usable_width, y)
+    y -= 12
+    p.setFont('Helvetica-Bold', 11)
+    p.drawString(table_x, y, f"Total Invoices: {invoices.count()}")
+    p.drawRightString(table_x + usable_width, y, f"Total Sales: ₱{total_sales:,.2f}")
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    resp = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    filename = 'sales_summary'
+    if start or end:
+        filename += f"_{start or ''}_{end or ''}"
+    # Open inline so browsers display the PDF for printing
+    resp['Content-Disposition'] = f'inline; filename="{filename}.pdf"'
+    return resp
+
+
+@superuser_required
+def sales_summary_xlsx(request):
+    """Export all invoices (not archived) as an Excel .xlsx file."""
+    if openpyxl is None:
+        return HttpResponse('openpyxl is not installed. Install with `pip install openpyxl`', status=500)
+    invoices = Invoice.objects.filter(is_archived=False).order_by('date_created')
+    # date range filter
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+    from datetime import date
+    try:
+        if start:
+            start_date = date.fromisoformat(start)
+            invoices = invoices.filter(date_created__date__gte=start_date)
+        if end:
+            end_date = date.fromisoformat(end)
+            invoices = invoices.filter(date_created__date__lte=end_date)
+    except Exception:
+        pass
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Sales'
+
+    headers = ['Invoice ID', 'Patient', 'Date', 'Is Paid', 'Created By', 'Total Amount']
+    ws.append(headers)
+
+    total_sales = 0
+    for inv in invoices:
+        amount = sum(float(it.price_at_time) * it.quantity for it in inv.items.all())
+        total_sales += amount
+        ws.append([inv.pk, f"{inv.patient.first_name} {inv.patient.last_name}", inv.date_created.strftime('%Y-%m-%d %H:%M'), 'Yes' if inv.is_paid else 'No', (inv.created_by.get_full_name() if inv.created_by else ''), float(f"{amount:.2f}")])
+
+    # summary rows
+    ws.append([])
+    ws.append(['TOTAL_INVOICES', invoices.count()])
+    ws.append(['TOTAL_SALES', float(f"{total_sales:.2f}")])
+
+    # auto-size columns
+    for i, col in enumerate(ws.columns, 1):
+        max_length = 0
+        column = get_column_letter(i)
+        for cell in col:
+            try:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            except Exception:
+                pass
+        ws.column_dimensions[column].width = (max_length + 2)
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    resp = HttpResponse(buffer.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = 'sales_summary'
+    if start or end:
+        filename += f"_{start or ''}_{end or ''}"
+    resp['Content-Disposition'] = f'attachment; filename="{filename}.xlsx"'
+    return resp
 
 # 6. Archive Module
 @superuser_required

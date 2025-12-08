@@ -32,6 +32,7 @@ urlpatterns = [
     path('invoices/<int:pk>/', views.invoice_detail, name='invoice_detail'),
     path('invoices/<int:pk>/update/', views.invoice_update, name='invoice_update'),
     path('invoices/<int:pk>/delete/', views.invoice_delete, name='invoice_delete'),
+    path('invoices/<int:pk>/download_pdf/', views.invoice_pdf, name='invoice_pdf'),
 
     # Archive Module
     path('archive/', views.archive, name='archive'),
@@ -58,4 +59,7 @@ urlpatterns = [
     
     # Sales Analytics
     path('sales/analytics/', views.sales_analytics, name='sales_analytics'),
+    path('sales/summary/csv/', views.sales_summary_csv, name='sales_summary_csv'),
+    path('sales/summary/pdf/', views.sales_summary_pdf, name='sales_summary_pdf'),
+    path('sales/summary/xlsx/', views.sales_summary_xlsx, name='sales_summary_xlsx'),
 ]
