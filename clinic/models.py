@@ -2,6 +2,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from decimal import Decimal
 
 class StaffProfile(models.Model):
     """Extended profile for staff users with position/role information"""
@@ -27,11 +28,12 @@ class StaffProfile(models.Model):
 
 
 class Patient(models.Model):
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    contact_number = models.CharField(max_length=15, blank=True)
-    email = models.EmailField(blank=True)
-    address = models.TextField(blank=True)
+    # Allow blank/null to let staff POS create minimal patient records
+    first_name = models.CharField(max_length=100, blank=True, null=True)
+    last_name = models.CharField(max_length=100, blank=True, null=True)
+    contact_number = models.CharField(max_length=15, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
     created_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='created_patients')
     created_at = models.DateTimeField(default=timezone.now)
     is_archived = models.BooleanField(default=False)
@@ -84,15 +86,21 @@ class Service(models.Model):
     }
 
     category = models.CharField(max_length=50, choices=DENTAL_CATEGORIES, default="CHECKUP")
-    name = models.CharField(max_length=150)
-    description = models.TextField(blank=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    # Relaxed fields so mobile POS can create/update with minimal data
+    name = models.CharField(max_length=150, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     active = models.BooleanField(default=True)
     is_archived = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
-        if not self.price:
-            self.price = self.DEFAULT_PRICES.get(self.category, 0)
+        # If price is missing or zero, try to set default based on category
+        if self.price is None or Decimal(self.price) == Decimal('0'):
+            default = self.DEFAULT_PRICES.get(self.category, 0)
+            try:
+                self.price = Decimal(default)
+            except Exception:
+                self.price = default
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -100,7 +108,8 @@ class Service(models.Model):
 
 
 class Invoice(models.Model):
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="invoices")
+    # Make patient optional so staff can create quick invoices without a linked patient
+    patient = models.ForeignKey(Patient, on_delete=models.SET_NULL, null=True, blank=True, related_name="invoices")
     date_created = models.DateTimeField(auto_now_add=True)
     is_paid = models.BooleanField(default=False)
     # Track which staff user created the invoice (nullable for legacy data)
@@ -112,21 +121,41 @@ class Invoice(models.Model):
         return sum(item.total_price() for item in self.items.all())
 
     def __str__(self):
-        return f"Invoice #{self.id} - {self.patient}"
+        if self.patient:
+            return f"Invoice #{self.id} - {self.patient}"
+        return f"Invoice #{self.id}"
 
 
 class InvoiceItem(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name="items")
-    service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    service_name_at_time = models.CharField(max_length=150)
-    price_at_time = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.PositiveIntegerField(default=1)
+    # allow service to be nullable for flexibility from mobile POS
+    service = models.ForeignKey(Service, on_delete=models.SET_NULL, null=True, blank=True)
+    service_name_at_time = models.CharField(max_length=150, blank=True, null=True)
+    price_at_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    quantity = models.PositiveIntegerField(default=1, blank=True, null=True)
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            self.price_at_time = self.service.price
-            self.service_name_at_time = self.service.name
+            if self.service:
+                # capture snapshot of service details if available
+                try:
+                    self.price_at_time = self.service.price
+                except Exception:
+                    self.price_at_time = self.price_at_time or Decimal('0')
+                try:
+                    self.service_name_at_time = self.service.name
+                except Exception:
+                    self.service_name_at_time = self.service_name_at_time or ''
+            else:
+                # ensure defaults
+                self.price_at_time = self.price_at_time or Decimal('0')
+                self.service_name_at_time = self.service_name_at_time or ''
         super().save(*args, **kwargs)
 
     def total_price(self):
-        return self.price_at_time * self.quantity
+        price = self.price_at_time or Decimal('0')
+        qty = self.quantity or 0
+        try:
+            return price * qty
+        except Exception:
+            return Decimal('0')

@@ -14,6 +14,11 @@ class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
         fields = ['id', 'category', 'name', 'description', 'price', 'active']
+        extra_kwargs = {
+            'name': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'description': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'price': {'required': False, 'allow_null': True},
+        }
 
 
 class PatientSerializer(serializers.ModelSerializer):
@@ -21,12 +26,20 @@ class PatientSerializer(serializers.ModelSerializer):
         model = Patient
         fields = ['id', 'first_name', 'last_name', 'contact_number', 'email', 'address', 'created_by', 'created_at']
         read_only_fields = ['id', 'created_by', 'created_at']
+        extra_kwargs = {
+            'first_name': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'last_name': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'contact_number': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'email': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'address': {'required': False, 'allow_null': True, 'allow_blank': True},
+        }
 
 
 class InvoiceItemSerializer(serializers.ModelSerializer):
     service_name_at_time = serializers.CharField(read_only=True)
     price_at_time = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_price = serializers.SerializerMethodField()
+    quantity = serializers.IntegerField(required=False, allow_null=True)
     
     class Meta:
         model = InvoiceItem
@@ -48,7 +61,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'date_created', 'items', 'created_by']
     
     def get_patient_name(self, obj):
-        return f"{obj.patient.first_name} {obj.patient.last_name}"
+        if not obj.patient:
+            return ""
+        return f"{obj.patient.first_name or ''} {obj.patient.last_name or ''}".strip()
     
     def get_total_amount(self, obj):
         return obj.total_amount()
