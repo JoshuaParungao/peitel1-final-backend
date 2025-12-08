@@ -164,10 +164,22 @@ if not DEBUG:
     # SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    CSRF_TRUSTED_ORIGINS = [
-        'https://peitel1-final-backend-7hci.onrender.com',
-        'https://*.render.com',
-    ]
+    # Allow Render-hosted domains and any host in ALLOWED_HOSTS (except IPs/localhost)
+    env_csrf = os.getenv('CSRF_TRUSTED_ORIGINS')
+    if env_csrf:
+        CSRF_TRUSTED_ORIGINS = [u.strip() for u in env_csrf.split(',') if u.strip()]
+    else:
+        csrf_origins = ['https://*.render.com']
+        for host in ALLOWED_HOSTS:
+            if not host:
+                continue
+            # skip bare IPs and localhost for https origins
+            if host in ('127.0.0.1', 'localhost') or host.replace('.', '').isdigit():
+                continue
+            # strip leading dot for wildcard subdomains
+            host_name = host.lstrip('.')
+            csrf_origins.append(f'https://{host_name}')
+        CSRF_TRUSTED_ORIGINS = csrf_origins
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_SECURITY_POLICY = {
         'default-src': ("'self'",),
