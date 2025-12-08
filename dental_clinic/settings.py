@@ -17,10 +17,11 @@ DEBUG = True
 
 # Render domain and localhost
 # Default includes common Render domain patterns and local IP for mobile testing
-default_hosts = '127.0.0.1,localhost,192.168.100.14,testserver,snack.expo.dev,*.render.com,peitel1-final-backend-7hci.onrender.com'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default_hosts).split(',')
-# Strip whitespace from each host
-ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS]
+default_hosts = "127.0.0.1,localhost,.onrender.com"
+
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", default_hosts).split(",")
+ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS]
+
 
 # Application definition
 INSTALLED_APPS = [
