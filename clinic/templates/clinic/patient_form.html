@@ -1,0 +1,75 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+
+<div class="form-card">
+    <h2 class="form-title">Patient Form</h2>
+
+    <form method="post" class="patient-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <div class="form-submit">
+            <button type="submit" class="btn submit-btn">Save</button>
+        </div>
+    </form>
+</div>
+
+<style>
+.form-card {
+    background: #fff;
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    max-width: 500px;
+    margin: 40px auto;
+}
+
+.form-title {
+    margin-bottom: 20px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.patient-form .form-group {
+    margin-bottom: 16px;
+}
+
+.patient-form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.patient-form input, 
+.patient-form select, 
+.patient-form textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
+
+.form-submit {
+    margin-top: 16px;
+    text-align: center;
+}
+
+.submit-btn {
+    padding: 10px 20px;
+    background-color: #1a73e8;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.submit-btn:hover {
+    background-color: #1669c1;
+}
+</style>
+
+{% endblock %}

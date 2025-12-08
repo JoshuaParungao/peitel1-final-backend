@@ -1,0 +1,221 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+
+<div class="analytics-container">
+    <h2>Sales Analytics</h2>
+    <div class="action-buttons">
+        <a href="{{ back_url }}" class="btn secondary-btn">Back to Dashboard</a>
+        <a href="{% url 'clinic:staff_list' %}" class="btn info-btn">View Staff List</a>
+    </div>
+
+    <!-- Sales Overview Cards -->
+    <div class="sales-overview">
+        <div class="overview-card">
+            <h6>Daily Sales</h6>
+            <h3>₱{{ daily_sales|floatformat:2 }}</h3>
+            <small>{{ daily_count }} invoices</small>
+        </div>
+        <div class="overview-card">
+            <h6>Weekly Sales</h6>
+            <h3>₱{{ weekly_sales|floatformat:2 }}</h3>
+            <small>{{ weekly_count }} invoices</small>
+        </div>
+        <div class="overview-card">
+            <h6>Monthly Sales</h6>
+            <h3>₱{{ monthly_sales|floatformat:2 }}</h3>
+            <small>{{ monthly_count }} invoices</small>
+        </div>
+        <div class="overview-card">
+            <h6>Yearly Sales</h6>
+            <h3>₱{{ yearly_sales|floatformat:2 }}</h3>
+            <small>{{ yearly_count }} invoices</small>
+        </div>
+    </div>
+
+    <!-- Staff-wise Sales Breakdown -->
+    <div class="card staff-sales-card">
+        <div class="card-header">
+            <h5>Staff-wise Sales Breakdown</h5>
+        </div>
+        <div class="card-body">
+            {% if staff_sales %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Staff Name</th>
+                            <th>Total Sales</th>
+                            <th>Total Invoices</th>
+                            <th>Daily</th>
+                            <th>Weekly</th>
+                            <th>Monthly</th>
+                            <th>Yearly</th>
+                            <th>% of Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in staff_sales %}
+                        {% if item.total_sales > 0 %}
+                        <tr>
+                            <td><strong>{{ item.staff.get_full_name|default:item.staff.username }}</strong></td>
+                            <td>₱{{ item.total_sales|floatformat:2 }}</td>
+                            <td>{{ item.total_invoices }}</td>
+                            <td>₱{{ item.daily|floatformat:2 }}</td>
+                            <td>₱{{ item.weekly|floatformat:2 }}</td>
+                            <td>₱{{ item.monthly|floatformat:2 }}</td>
+                            <td>₱{{ item.yearly|floatformat:2 }}</td>
+                            <td>{{ item.yearly_percentage|floatformat:1 }}%</td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                        <tr class="total-row">
+                            <td><strong>Total</strong></td>
+                            <td>₱{{ yearly_sales|floatformat:2 }}</td>
+                            <td>{{ yearly_count }}</td>
+                            <td>₱{{ daily_sales|floatformat:2 }}</td>
+                            <td>₱{{ weekly_sales|floatformat:2 }}</td>
+                            <td>₱{{ monthly_sales|floatformat:2 }}</td>
+                            <td>₱{{ yearly_sales|floatformat:2 }}</td>
+                            <td>100%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="no-data">No sales data available.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sales Summary Statistics -->
+    <div class="summary-row">
+        <div class="summary-card green-card">
+            <h5>Sales Performance</h5>
+            <ul>
+                <li>Average Daily Sales: <strong>₱{{ daily_sales|floatformat:2 }}</strong></li>
+                <li>Average Weekly Sales: <strong>₱{{ weekly_sales|floatformat:2 }}</strong></li>
+                <li>Average Monthly Sales: <strong>₱{{ monthly_sales|floatformat:2 }}</strong></li>
+                <li>Average Yearly Sales: <strong>₱{{ yearly_sales|floatformat:2 }}</strong></li>
+                <li>Total Transactions: <strong>{{ yearly_count }}</strong></li>
+            </ul>
+        </div>
+
+        <div class="summary-card blue-card">
+            <h5>Top Performers This Year</h5>
+            <ul>
+                {% for item in staff_sales|dictsort:"yearly"|slice:"-5:" reversed %}
+                {% if item.yearly > 0 %}
+                <li>
+                    <div class="top-performer">
+                        <div>
+                            <strong>{{ item.staff.get_full_name|default:item.staff.username }}</strong><br>
+                            <small>{{ item.total_invoices }} invoices</small>
+                        </div>
+                        <div class="text-end">
+                            <strong>₱{{ item.yearly|floatformat:2 }}</strong><br>
+                            <small>{{ item.yearly_percentage|floatformat:1 }}%</small>
+                        </div>
+                    </div>
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+.analytics-container {
+    padding: 24px;
+}
+
+.action-buttons {
+    margin-bottom: 16px;
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.secondary-btn { background-color: #6c757d; color: #fff; }
+.secondary-btn:hover { background-color: #5a6268; }
+
+.info-btn { background-color: #17a2b8; color: #fff; }
+.info-btn:hover { background-color: #138496; }
+
+.sales-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.overview-card {
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.overview-card h3 { margin: 6px 0; }
+
+.staff-sales-card {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.staff-sales-card .card-header {
+    background-color: #1a73e8;
+    color: #fff;
+    padding: 12px 16px;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+.total-row {
+    background-color: #f1f1f1;
+    font-weight: 600;
+}
+
+.summary-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.summary-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    padding: 16px;
+}
+
+.green-card { border-top: 4px solid #28a745; }
+.blue-card { border-top: 4px solid #17a2b8; }
+
+.top-performer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.no-data {
+    padding: 16px;
+    text-align: center;
+    color: #555;
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <h2 class="login-title">Staff Login</h2>
+
+        <form method="post" class="login-form" novalidate>
+            {% csrf_token %}
+            {% if error %}
+                <div class="message error">{{ error }}</div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required value="{{ request.POST.username }}">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <div class="form-group submit-group">
+                <button class="btn submit-btn" type="submit">Login</button>
+            </div>
+        </form>
+
+        <div class="register-link">
+            <small>Don't have an account? <a href="{% url 'clinic:register' %}">Register</a></small>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ===== Wrapper ===== */
+.login-wrapper {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+    background-color: #f7f9fc;
+}
+
+/* ===== Card ===== */
+.login-card {
+    background: #fff;
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+}
+
+/* ===== Title ===== */
+.login-title {
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+/* ===== Form ===== */
+.login-form .form-group {
+    margin-top: 12px;
+    text-align: left;
+}
+
+.login-form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
+
+/* ===== Submit Button ===== */
+.submit-group {
+    margin-top: 16px;
+    text-align: center;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 10px 0;
+    background-color: #1a73e8;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.submit-btn:hover {
+    background-color: #1669c1;
+}
+
+/* ===== Error Message ===== */
+.message.error {
+    background-color: #fdecea;
+    color: #b71c1c;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+/* ===== Register Link ===== */
+.register-link {
+    margin-top: 14px;
+    color: #777;
+}
+
+.register-link a {
+    color: #1a73e8;
+    text-decoration: none;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
+}
+</style>
+
+{% endblock %}

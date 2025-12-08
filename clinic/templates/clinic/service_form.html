@@ -1,0 +1,94 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+
+<div class="form-wrapper">
+    <div class="form-card">
+        <h2 class="form-title">Service Form</h2>
+
+        <form method="post" class="service-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <div class="form-submit">
+                <button type="submit" class="btn submit-btn">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+/* ===== Wrapper ===== */
+.form-wrapper {
+    min-height: 60vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 28px;
+    background-color: #f7f9fc;
+}
+
+/* ===== Card ===== */
+.form-card {
+    background-color: #fff;
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    width: 100%;
+    max-width: 500px;
+}
+
+/* ===== Title ===== */
+.form-title {
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+/* ===== Form Fields ===== */
+.service-form p {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+}
+
+.service-form label {
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.service-form input,
+.service-form select,
+.service-form textarea {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ===== Submit Button ===== */
+.form-submit {
+    margin-top: 16px;
+    text-align: center;
+}
+
+.submit-btn {
+    padding: 10px 0;
+    width: 100%;
+    background-color: #1a73e8;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.submit-btn:hover {
+    background-color: #1669c1;
+}
+</style>
+
+{% endblock %}

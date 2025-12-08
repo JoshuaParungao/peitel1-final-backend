@@ -1,0 +1,123 @@
+{% extends 'clinic/base.html' %}
+{% block title %}Services - Dental POS{% endblock %}
+{% block content %}
+
+<div class="services-container">
+    <div class="card">
+        <div class="card-header">
+            <h2>Services</h2>
+            <a class="btn add-btn" href="{% url 'clinic:service_create' %}">Add Service</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                    <tr>
+                        <td>{{ service.name }}</td>
+                        <td>{{ service.category }}</td>
+                        <td>₱{{ service.price }}</td>
+                        <td>
+                            <a class="btn edit-btn" href="{% url 'clinic:service_update' service.pk %}">Edit</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="no-data">No services found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.services-container {
+    padding: 24px;
+}
+
+/* Card Styling */
+.card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+/* Card Header */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.card-header h2 {
+    margin: 0;
+}
+
+/* Buttons */
+.btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.add-btn {
+    background-color: #1a73e8;
+    color: #fff;
+}
+
+.add-btn:hover {
+    background-color: #1669c1;
+}
+
+.edit-btn {
+    background-color: #28a745;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.edit-btn:hover {
+    background-color: #218838;
+}
+
+/* Table Styling */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table thead tr {
+    background-color: #f1f3f6;
+}
+
+.table th, .table td {
+    padding: 12px 10px;
+    text-align: left;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* No Data */
+.no-data {
+    text-align: center;
+    color: #555;
+    font-style: italic;
+}
+</style>
+
+{% endblock %}

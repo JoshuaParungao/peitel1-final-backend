@@ -1,0 +1,189 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+<div class="staff-management-container">
+    <h2>Staff Management</h2>
+
+    <div class="action-buttons">
+        <a href="{{ back_url }}" class="btn secondary-btn">Back to Dashboard</a>
+        <a href="{% url 'clinic:sales_analytics' %}" class="btn info-btn">View Sales Analytics</a>
+    </div>
+
+    {% if staff_data %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Staff Name</th>
+                    <th>Position</th>
+                    <th>Status</th>
+                    <th>Total Invoices</th>
+                    <th>Total Sales</th>
+                    <th>Last Activity</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in staff_data %}
+                <tr>
+                    <td><strong>{{ item.user.get_full_name|default:item.user.username }}</strong></td>
+                    <td>
+                        {% if item.profile %}
+                            {{ item.profile.get_position_display }}
+                        {% else %}
+                            <span class="badge secondary-badge">Staff</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.user.is_active %}
+                            <span class="badge success-badge">Active</span>
+                        {% else %}
+                            <span class="badge danger-badge">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge primary-badge">{{ item.total_invoices }}</span></td>
+                    <td><strong>₱{{ item.total_sales|floatformat:2 }}</strong></td>
+                    <td>
+                        {% if item.last_activity %}
+                            <small>{{ item.last_activity|date:"M d, Y H:i" }}</small>
+                        {% else %}
+                            <small class="text-muted">No activity</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="#" class="btn info-btn btn-sm">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="summary-row">
+        <div class="summary-card">
+            <h5>Summary</h5>
+            <p><strong>Total Active Staff:</strong> {{ staff_data|length }}</p>
+            <p><strong>Total Invoices Created:</strong> {{ total_invoices_count }}</p>
+            <p><strong>Combined Sales:</strong> ₱{{ total_sales_amount|floatformat:2 }}</p>
+        </div>
+
+        <div class="summary-card info-card">
+            <h5>Top Performers</h5>
+            <ul class="top-performers">
+                {% regroup staff_data|dictsort:"total_sales"|slice:"-3:" by total_sales as top_performers %}
+                {% for sales, items in top_performers %}
+                    {% for item in items|slice:"-1:" %}
+                    <li>
+                        <strong>{{ item.user.get_full_name|default:item.user.username }}</strong><br>
+                        <small>₱{{ item.total_sales|floatformat:2 }} • {{ item.total_invoices }} invoices</small>
+                    </li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert info-alert">No active staff members found.</div>
+    {% endif %}
+</div>
+
+<style>
+.staff-management-container {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Buttons */
+.action-buttons {
+    margin-bottom: 16px;
+    display: flex;
+    gap: 8px;
+}
+
+.btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.2s;
+    display: inline-block;
+}
+
+.secondary-btn {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+.secondary-btn:hover { background-color: #5a6268; }
+
+.info-btn {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
+.info-btn:hover { background-color: #138496; }
+
+.btn-sm { font-size: 12px; padding: 4px 8px; }
+
+/* Badges */
+.badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #fff;
+}
+
+.primary-badge { background-color: #007bff; }
+.success-badge { background-color: #28a745; }
+.danger-badge { background-color: #dc3545; }
+.secondary-badge { background-color: #6c757d; }
+
+/* Table */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.table thead { background-color: #f1f3f6; }
+
+.table th, .table td { padding: 12px 10px; text-align: left; }
+
+.table-hover tbody tr:hover { background-color: #f5f5f5; }
+
+/* Summary Cards */
+.summary-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.summary-card {
+    flex: 1;
+    min-width: 280px;
+    padding: 16px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.info-card { background-color: #e9f7fd; }
+
+.top-performers {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.top-performers li {
+    padding: 6px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.top-performers li:last-child { border-bottom: none; }
+</style>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'clinic/base.html' %}
+{% block title %}Patients - Dental POS{% endblock %}
+
+{% block content %}
+<div class="card patients-card">
+    <div class="card-header">
+        <h2>Patients</h2>
+        <a class="btn add-btn" href="{% url 'clinic:patient_create' %}">Add Patient</a>
+    </div>
+
+    <table class="table patients-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for patient in patients %}
+            <tr>
+                <td>{{ patient.first_name }} {{ patient.last_name }}</td>
+                <td>{{ patient.contact_number }}<br>{{ patient.email }}</td>
+                <td>{{ patient.created_at|date:"Y-m-d" }}</td>
+                <td>
+                    <a class="btn view-btn" href="{% url 'clinic:patient_detail' patient.pk %}">View</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="no-data">No patients found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<style>
+.patients-card {
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    margin: 40px auto;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.add-btn {
+    padding: 8px 16px;
+    background-color: #1a73e8;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.add-btn:hover {
+    background-color: #1669c1;
+}
+
+.patients-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+}
+
+.patients-table th, .patients-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+}
+
+.patients-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+}
+
+.patients-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+.view-btn {
+    padding: 6px 12px;
+    background-color: #4caf50;
+    color: #fff;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.view-btn:hover {
+    background-color: #3b8d40;
+}
+
+.no-data {
+    text-align: center;
+    font-style: italic;
+    color: #777;
+}
+</style>
+
+{% endblock %}

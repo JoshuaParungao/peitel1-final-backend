@@ -1,0 +1,81 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+
+<div class="invoice-detail-card card">
+    {% if invoice %}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h2 style="margin:0">Invoice #{{ invoice.pk }}</h2>
+            {% if invoice.is_archived %}
+                <span class="badge danger-badge">Archived</span>
+            {% endif %}
+        </div>
+
+        <div style="margin-bottom:8px;color:var(--muted);font-size:13px">Viewing as: {{ request.user.get_full_name|default:request.user.username }} {% if request.user.is_superuser %}(superuser){% endif %}</div>
+
+        <div class="invoice-meta" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px">
+            <div><strong>Patient</strong><br><small>{{ invoice.patient }}</small></div>
+            <div><strong>Date</strong><br><small>{{ invoice.date_created|date:"M d, Y H:i" }}</small></div>
+            <div>
+                <strong>Created by</strong><br>
+                <small>
+                    {% if invoice.created_by %}
+                        {{ invoice.created_by.get_full_name|default:invoice.created_by.username }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </small>
+            </div>
+            <div><strong>Paid</strong><br><small>{% if invoice.is_paid %}Yes{% else %}No{% endif %}</small></div>
+        </div>
+
+        <div class="invoice-items">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Unit Price</th>
+                        <th>Qty</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice.items.all %}
+                        <tr>
+                            <td>{{ item.service_name_at_time }}</td>
+                            <td>₱{{ item.price_at_time|floatformat:2 }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>₱{{ item.total_price|floatformat:2 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-muted">No items on this invoice.</td></tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" style="text-align:right"><strong>Total</strong></td>
+                        <td><strong>₱{{ invoice.total_amount|floatformat:2 }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:16px">
+            <a href="{% url 'clinic:invoices_list' %}" class="btn secondary">Back to Invoices</a>
+            {% if request.user.is_superuser %}
+                <a href="{% url 'clinic:invoice_update' invoice.pk %}" class="btn">Edit</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="message error">No invoice data available.</div>
+        <a href="{% url 'clinic:invoices_list' %}" class="btn secondary">Back to Invoices</a>
+    {% endif %}
+</div>
+
+<style>
+.invoice-detail-card { max-width:980px; margin:28px auto; }
+.invoice-meta small { color:var(--muted); }
+.text-muted { color:var(--muted); }
+.table thead th { background: transparent; color:var(--muted); font-weight:600 }
+</style>
+
+{% endblock %}

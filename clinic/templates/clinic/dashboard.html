@@ -1,0 +1,107 @@
+{% extends 'clinic/base.html' %}
+{% block title %}Dashboard - Dental POS{% endblock %}
+
+{% block content %}
+<!-- ===== DASHBOARD CARDS ===== -->
+<div class="dashboard-grid">
+  <div class="dashboard-card">
+    <h4>Total Patients</h4>
+    <p class="stat">{{ total_patients }}</p>
+  </div>
+  <div class="dashboard-card">
+    <h4>Total Services</h4>
+    <p class="stat">{{ total_services }}</p>
+  </div>
+  <div class="dashboard-card">
+    <h4>Total Invoices</h4>
+    <p class="stat">{{ total_invoices }}</p>
+  </div>
+  <div class="dashboard-card">
+    <h4>Staff Count</h4>
+    <p class="stat">{{ total_staff }}</p>
+  </div>
+</div>
+
+<!-- ===== QUICK ACTIONS ===== -->
+<div class="card quick-actions mt-4">
+  <h4>Quick Actions</h4>
+  <div class="actions">
+    <a class="btn primary-btn" href="{% url 'clinic:patients_list' %}">Patients</a>
+    <a class="btn primary-btn" href="{% url 'clinic:services_list' %}">Services</a>
+    <a class="btn primary-btn" href="{% url 'clinic:invoices_list' %}">Invoices</a>
+    <a class="btn secondary-btn" href="{% url 'clinic:archive' %}">Archive</a>
+    {% if request.user.is_superuser %}
+      <a class="btn secondary-btn" href="{% url 'clinic:staff_approval' %}">Staff Approval</a>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+/* DASHBOARD GRID */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+/* DASHBOARD CARD */
+.dashboard-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+.dashboard-card h4 {
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+.dashboard-card .stat {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+/* QUICK ACTIONS */
+.quick-actions {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.quick-actions h4 {
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.btn {
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+.primary-btn {
+  background-color: #1a73e8;
+  color: #fff;
+}
+.primary-btn:hover {
+  background-color: #1669c1;
+}
+.secondary-btn {
+  background-color: #e0e0e0;
+  color: #333;
+}
+.secondary-btn:hover {
+  background-color: #cfcfcf;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Archive</h2>
+        <a href="{{ back_url }}" class="btn btn-outline-secondary">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <!-- ===== ARCHIVED PATIENTS ===== -->
+    <div class="card shadow-sm mb-4 rounded-4">
+        <div class="card-body">
+            <h4 class="mb-3 fw-semibold">Archived Patients</h4>
+
+            {% if archived_patients %}
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Contact</th>
+                            <th>Email</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in archived_patients %}
+                        <tr>
+                            <td>{{ patient.first_name }} {{ patient.last_name }}</td>
+                            <td>{{ patient.contact_number }}</td>
+                            <td>{{ patient.email }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'clinic:restore_patient' patient.id %}" 
+                                   class="btn btn-success btn-sm rounded-pill px-3">
+                                    Restore
+                                </a>
+                                <a href="{% url 'clinic:delete_patient_permanent' patient.id %}"
+                                   class="btn btn-danger btn-sm rounded-pill px-3 ms-1"
+                                   onclick="return confirm('Are you sure? This will permanently delete the patient.')">
+                                    Delete
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted fst-italic">No archived patients.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ===== ARCHIVED SERVICES ===== -->
+    <div class="card shadow-sm mb-4 rounded-4">
+        <div class="card-body">
+            <h4 class="mb-3 fw-semibold">Archived Services</h4>
+
+            {% if archived_services %}
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for service in archived_services %}
+                        <tr>
+                            <td>{{ service.name }}</td>
+                            <td>{{ service.get_category_display }}</td>
+                            <td>₱{{ service.price }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'clinic:restore_service' service.id %}" 
+                                   class="btn btn-success btn-sm rounded-pill px-3">
+                                    Restore
+                                </a>
+                                <a href="{% url 'clinic:delete_service_permanent' service.id %}" 
+                                   class="btn btn-danger btn-sm rounded-pill px-3 ms-1"
+                                   onclick="return confirm('Are you sure? This will permanently delete the service.')">
+                                    Delete
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted fst-italic">No archived services.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ===== ARCHIVED INVOICES ===== -->
+    <div class="card shadow-sm rounded-4 mb-5">
+        <div class="card-body">
+            <h4 class="mb-3 fw-semibold">Archived Invoices</h4>
+
+            {% if archived_invoices %}
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Patient</th>
+                            <th>Amount</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in archived_invoices %}
+                        <tr>
+                            <td>#{{ invoice.id }}</td>
+                            <td>{{ invoice.patient }}</td>
+                            <td>₱{{ invoice.total_amount }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'clinic:restore_invoice' invoice.id %}"
+                                   class="btn btn-success btn-sm rounded-pill px-3">
+                                    Restore
+                                </a>
+                                <a href="{% url 'clinic:delete_invoice_permanent' invoice.id %}"
+                                   class="btn btn-danger btn-sm rounded-pill px-3 ms-1"
+                                   onclick="return confirm('Are you sure? This will permanently delete the invoice.')">
+                                    Delete
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted fst-italic">No archived invoices.</p>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

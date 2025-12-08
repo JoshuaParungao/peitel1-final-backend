@@ -1,0 +1,52 @@
+[
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$R6RlEdkI0SSL7DwnVwSibt$EIP7sB7RBYUr74OvquEtWgqEtP2qITnFq7QUOVPfZDA=",
+    "last_login": "2025-11-30T17:01:02.604Z",
+    "is_superuser": true,
+    "username": "Dra.Claire",
+    "first_name": "",
+    "last_name": "",
+    "email": "claireanntiomico@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-11-30T17:00:14.658Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "qkb494ty0eu5qbx23q4mwxl1jkctgij0",
+  "fields": {
+    "session_data": ".eJxVjMsOwiAQRf-FtSEDgzxcuu83EB6DVA0kpV0Z_12bdKHbe865L-bDtla_DVr8nNmFCXb63WJID2o7yPfQbp2n3tZljnxX-EEHn3qm5_Vw_w5qGPVbG2fAlmQdWIEYwSmdz6gySaGiTCkXkhjIWgmKFBaQ2mmUwSZABCPY-wO-XDas:1vPknG:3EzpA9hmTmatP-XPaD3u-8qwMnxQTjJmPQqu4eMUIMo",
+    "expire_date": "2025-12-14T17:01:02.611Z"
+  }
+},
+{
+  "model": "clinic.patient",
+  "pk": 1,
+  "fields": {
+    "first_name": "sample",
+    "last_name": "first",
+    "contact_number": "0936-222-4565",
+    "email": "",
+    "address": "",
+    "created_by": [
+      "Dra.Claire"
+    ],
+    "created_at": "2025-11-30T17:02:10.612Z"
+  }
+},
+{
+  "model": "authtoken.token",
+  "pk": "3af0cf38a0fafcb302c64e9e0a796a67bc4d76b3",
+  "fields": {
+    "user": [
+      "Dra.Claire"
+    ],
+    "created": "2025-11-30T17:01:43.721Z"
+  }
+}
+]
