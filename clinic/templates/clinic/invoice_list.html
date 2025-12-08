@@ -25,8 +25,9 @@
                 <td>{{ invoice.patient.first_name }} {{ invoice.patient.last_name }}</td>
                 <td>{{ invoice.date_created|date:'Y-m-d' }}</td>
                 <td>₱{{ invoice.total_amount }}</td>
-                <td>
-                    <a class="btn view-btn" href="{% url 'clinic:invoice_detail' invoice.pk %}">View</a>
+                <td class="actions-cell">
+                    <a class="btn view-btn small" href="{% url 'clinic:invoice_detail' invoice.pk %}">View</a>
+                    <a class="btn delete-btn small" href="{% url 'clinic:invoice_delete' invoice.pk %}" onclick="return confirm('Archive this invoice?')">Archive</a>
                 </td>
             </tr>
             {% empty %}
@@ -94,19 +95,7 @@
     background-color: #f9f9f9;
 }
 
-.view-btn {
-    padding: 6px 12px;
-    background-color: #4caf50;
-    color: #fff;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 500;
-    transition: background 0.2s;
-}
-
-.view-btn:hover {
-    background-color: #3b8d40;
-}
+/* Button styles are provided globally in app.css */
 
 .no-data {
     text-align: center;

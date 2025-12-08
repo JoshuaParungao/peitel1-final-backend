@@ -51,6 +51,7 @@
                     </td>
                     <td>
                         <a href="#" class="btn info-btn btn-sm">View</a>
+                        <a href="{% url 'clinic:staff_delete' item.user.pk %}" class="btn delete-btn small" onclick="return confirm('Archive this staff member?')">Archive</a>
                     </td>
                 </tr>
                 {% endfor %}

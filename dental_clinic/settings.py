@@ -28,6 +28,12 @@ default_hosts = "127.0.0.1,localhost,.onrender.com"
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", default_hosts).split(",")
 ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS]
 
+# Allow a developer machine IP for physical device testing when DEBUG is enabled.
+# You can override the IP using the DEV_HOST_IP env var.
+DEV_HOST_IP = os.getenv('DEV_HOST_IP', '192.168.100.14')
+if DEBUG and DEV_HOST_IP and DEV_HOST_IP not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(DEV_HOST_IP)
+
 
 # Application definition
 INSTALLED_APPS = [

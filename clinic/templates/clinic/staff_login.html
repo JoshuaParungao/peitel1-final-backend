@@ -1,0 +1,35 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <h2 class="login-title">Staff POS Login</h2>
+
+        <form method="post" class="login-form" novalidate>
+            {% csrf_token %}
+            {% if form.errors %}
+                <div class="message error">{{ form.non_field_errors|join:" " }}</div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="id_username">Username</label>
+                <input type="text" id="id_username" name="username" required value="{{ request.POST.username }}">
+            </div>
+
+            <div class="form-group">
+                <label for="id_password">Password</label>
+                <input type="password" id="id_password" name="password" required>
+            </div>
+
+            <div class="form-group submit-group">
+                <button class="btn submit-btn" type="submit">Login</button>
+            </div>
+        </form>
+
+        <div class="register-link">
+            <small>Don't have an account? <a href="{% url 'clinic:register' %}">Register</a></small>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

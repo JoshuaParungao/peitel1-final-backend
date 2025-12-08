@@ -8,6 +8,8 @@ services:
     envVars:
       - key: DJANGO_DEBUG
         value: "False"
-    postdeploy: |
-      echo "Running postdeploy script"
-      /bin/bash ./scripts/postdeploy.sh
+    # Run migrations and collectstatic on each deploy (release step)
+    releaseCommand: >
+      python manage.py migrate --noinput && \
+      python manage.py collectstatic --noinput && \
+      python manage.py postdeploy --noinput || true

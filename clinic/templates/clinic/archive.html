@@ -98,6 +98,50 @@
         </div>
     </div>
 
+    <!-- ===== ARCHIVED STAFF ===== -->
+    <div class="card shadow-sm mb-4 rounded-4">
+        <div class="card-body">
+            <h4 class="mb-3 fw-semibold">Archived Staff</h4>
+
+            {% if archived_staff %}
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Position</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for profile in archived_staff %}
+                        <tr>
+                            <td>{{ profile.user.get_full_name|default:profile.user.username }}</td>
+                            <td>{{ profile.get_position_display }}</td>
+                            <td><span class="badge danger-badge">Archived</span></td>
+                            <td class="text-end">
+                                <a href="{% url 'clinic:restore_staff' profile.pk %}" 
+                                   class="btn btn-success btn-sm rounded-pill px-3">
+                                    Restore
+                                </a>
+                                <a href="{% url 'clinic:delete_staff_permanent' profile.pk %}" 
+                                   class="btn btn-danger btn-sm rounded-pill px-3 ms-1"
+                                   onclick="return confirm('Are you sure? This will permanently delete the staff account.')">
+                                    Delete
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted fst-italic">No archived staff.</p>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- ===== ARCHIVED INVOICES ===== -->
     <div class="card shadow-sm rounded-4 mb-5">
         <div class="card-body">

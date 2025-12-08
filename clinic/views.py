@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
-from .models import Patient, Service, Invoice, InvoiceItem
+from .models import Patient, Service, Invoice, InvoiceItem, StaffProfile
 from .forms import PatientForm, ServiceForm, InvoiceForm
 
 def superuser_required(view_func):
@@ -103,8 +103,11 @@ def patient_update(request, pk):
 @superuser_required
 def patient_delete(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
+    # Soft-delete the patient and archive related invoices
     patient.is_archived = True
     patient.save()
+    # Archive all invoices for this patient (idempotent)
+    Invoice.objects.filter(patient=patient).update(is_archived=True)
     return redirect('clinic:patients_list')
 
 # 4. Services Module
@@ -139,8 +142,11 @@ def service_update(request, pk):
 @superuser_required
 def service_delete(request, pk):
     service = get_object_or_404(Service, pk=pk)
+    # Soft-delete the service and archive any invoices that include this service
     service.is_archived = True
     service.save()
+    # Archive invoices that reference this service via InvoiceItem
+    Invoice.objects.filter(items__service=service).update(is_archived=True)
     return redirect('clinic:services_list')
 
 # 5. Invoices Module
@@ -192,10 +198,12 @@ def archive(request):
     archived_patients = Patient.objects.filter(is_archived=True)
     archived_services = Service.objects.filter(is_archived=True)
     archived_invoices = Invoice.objects.filter(is_archived=True)
+    archived_staff = StaffProfile.objects.filter(is_archived=True)
     return render(request, 'clinic/archive.html', {
         'archived_patients': archived_patients,
         'archived_services': archived_services,
         'archived_invoices': archived_invoices,
+        'archived_staff': archived_staff,
         'back_url': reverse('clinic:dashboard')
     })
 
@@ -268,6 +276,13 @@ def approve_staff(request, pk):
     staff = get_object_or_404(User, pk=pk, is_staff=True)
     staff.is_active = True
     staff.save()
+    # mark StaffProfile as approved when approving via admin
+    try:
+        profile = staff.staff_profile
+        profile.approved = True
+        profile.save()
+    except Exception:
+        pass
     return redirect('clinic:staff_approval')
 
 @superuser_required
@@ -275,6 +290,43 @@ def reject_staff(request, pk):
     staff = get_object_or_404(User, pk=pk, is_staff=True)
     staff.delete()
     return redirect('clinic:staff_approval')
+
+
+@superuser_required
+def staff_delete(request, pk):
+    staff = get_object_or_404(User, pk=pk, is_staff=True)
+    # soft-archive: mark StaffProfile.is_archived and deactivate user
+    profile = getattr(staff, 'staff_profile', None)
+    if profile:
+        profile.is_archived = True
+        profile.save()
+    staff.is_active = False
+    staff.save()
+    return redirect('clinic:staff_list')
+
+
+@superuser_required
+def restore_staff(request, pk):
+    # pk is StaffProfile id
+    profile = get_object_or_404(StaffProfile, pk=pk, is_archived=True)
+    profile.is_archived = False
+    profile.save()
+    # reactivate user
+    user = profile.user
+    user.is_active = True
+    user.save()
+    return redirect('clinic:archive')
+
+
+@superuser_required
+def delete_staff_permanent(request, pk):
+    # pk is StaffProfile id
+    profile = get_object_or_404(StaffProfile, pk=pk, is_archived=True)
+    user = profile.user
+    profile.delete()
+    if user:
+        user.delete()
+    return redirect('clinic:archive')
 
 # 8. Staff List with Activity Tracking
 @superuser_required
@@ -309,6 +361,55 @@ def staff_list(request):
         'total_sales_amount': total_sales_amount,
         'back_url': reverse('clinic:dashboard')
     })
+
+
+# --- Staff POS (mobile) -------------------------------------------------
+def staff_required(view_func):
+    return user_passes_test(lambda u: u.is_authenticated and u.is_staff and u.is_active and getattr(getattr(u, 'staff_profile', None), 'approved', False), login_url='clinic:staff_login')(view_func)
+
+
+@staff_required
+def staff_pos(request):
+    """Simple mobile-friendly POS for approved staff: add/select patient, pick services, generate invoice."""
+    services = Service.objects.filter(active=True, is_archived=False)
+    if request.method == 'POST':
+        # Determine patient: existing or new
+        patient_id = request.POST.get('patient_id')
+        if patient_id:
+            patient = get_object_or_404(Patient, pk=patient_id)
+        else:
+            # Create new patient from minimal fields
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            contact_number = request.POST.get('contact_number')
+            email = request.POST.get('email')
+            address = request.POST.get('address')
+            patient = Patient.objects.create(
+                first_name=first_name or 'Unknown',
+                last_name=last_name or 'Patient',
+                contact_number=contact_number or '',
+                email=email or '',
+                address=address or '',
+                created_by=request.user
+            )
+
+        # Create invoice
+        invoice = Invoice.objects.create(patient=patient, created_by=request.user)
+
+        # Collect service quantities from POST. Inputs are named service_<id>
+        for svc in services:
+            qty_raw = request.POST.get(f'service_{svc.id}')
+            try:
+                qty = int(qty_raw) if qty_raw else 0
+            except ValueError:
+                qty = 0
+            if qty and qty > 0:
+                InvoiceItem.objects.create(invoice=invoice, service=svc, quantity=qty)
+
+        return redirect('clinic:invoice_detail', pk=invoice.pk)
+
+    # GET: show POS interface
+    return render(request, 'clinic/staff_pos.html', {'services': services})
 
 # 9. Sales Analytics Module
 @superuser_required

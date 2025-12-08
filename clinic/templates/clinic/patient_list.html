@@ -23,8 +23,9 @@
                 <td>{{ patient.first_name }} {{ patient.last_name }}</td>
                 <td>{{ patient.contact_number }}<br>{{ patient.email }}</td>
                 <td>{{ patient.created_at|date:"Y-m-d" }}</td>
-                <td>
-                    <a class="btn view-btn" href="{% url 'clinic:patient_detail' patient.pk %}">View</a>
+                <td class="actions-cell">
+                    <a class="btn view-btn small" href="{% url 'clinic:patient_detail' patient.pk %}">View</a>
+                    <a class="btn delete-btn small" href="{% url 'clinic:patient_delete' patient.pk %}" onclick="return confirm('Archive this patient?')">Archive</a>
                 </td>
             </tr>
             {% empty %}
@@ -92,19 +93,7 @@
     background-color: #f9f9f9;
 }
 
-.view-btn {
-    padding: 6px 12px;
-    background-color: #4caf50;
-    color: #fff;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 500;
-    transition: background 0.2s;
-}
-
-.view-btn:hover {
-    background-color: #3b8d40;
-}
+    /* Button styles are provided globally in app.css */
 
 .no-data {
     text-align: center;

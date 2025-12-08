@@ -1,0 +1,80 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+
+<div class="staff-pos container">
+  <header class="pos-header">
+    <h2>Staff POS</h2>
+    <p class="muted">Add patient, select services, generate invoice</p>
+  </header>
+
+  <form method="post" class="pos-form">
+    {% csrf_token %}
+
+    <section class="patient-section card">
+      <h3>Patient</h3>
+      <div class="form-row">
+        <input type="hidden" name="patient_id" id="patient_id" />
+        <div class="form-group">
+          <label>First name</label>
+          <input name="first_name" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label>Last name</label>
+          <input name="last_name" class="form-control" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Contact</label>
+          <input name="contact_number" class="form-control" type="tel" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input name="email" class="form-control" type="email" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Address</label>
+        <textarea name="address" class="form-control" rows="2"></textarea>
+      </div>
+    </section>
+
+    <section class="services-section card">
+      <h3>Services</h3>
+      <div class="services-list">
+        {% for svc in services %}
+          <label class="service-item">
+            <div class="service-meta">
+              <strong>{{ svc.name }}</strong>
+              <div class="muted">₱{{ svc.price }}</div>
+            </div>
+            <div class="service-qty">
+              <input type="number" min="0" name="service_{{ svc.id }}" value="0" class="form-control qty-input" />
+            </div>
+          </label>
+        {% empty %}
+          <p>No services available.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <div class="pos-actions">
+      <button class="btn btn-primary" type="submit">Generate Invoice</button>
+    </div>
+  </form>
+
+</div>
+
+<style>
+.container { padding: 12px; }
+.pos-header h2 { margin: 0 0 6px 0 }
+.card { background:#fff; padding:12px; border-radius:8px; margin-bottom:12px }
+.form-row { display:flex; gap:8px }
+.form-group { flex:1 }
+.service-item { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f0f0f0 }
+.service-meta .muted { color:#666; font-size:13px }
+.qty-input { width:80px }
+.pos-actions { text-align:center }
+</style>
+
+{% endblock %}

@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .auth_views import FrontendLoginView, FrontendRegistrationView, FrontendLogoutView
+from .auth_views import FrontendLoginView, FrontendRegistrationView, FrontendLogoutView, StaffLoginView
 
 app_name = 'clinic'
 
@@ -39,6 +39,8 @@ urlpatterns = [
     path('archive/patient/<int:pk>/delete/', views.delete_patient_permanent, name='delete_patient_permanent'),
     path('archive/service/<int:pk>/restore/', views.restore_service, name='restore_service'),
     path('archive/service/<int:pk>/delete/', views.delete_service_permanent, name='delete_service_permanent'),
+    path('archive/staff/<int:pk>/restore/', views.restore_staff, name='restore_staff'),
+    path('archive/staff/<int:pk>/delete/', views.delete_staff_permanent, name='delete_staff_permanent'),
     path('archive/invoice/<int:pk>/restore/', views.restore_invoice, name='restore_invoice'),
     path('archive/invoice/<int:pk>/delete/', views.delete_invoice_permanent, name='delete_invoice_permanent'),
 
@@ -49,6 +51,10 @@ urlpatterns = [
     
     # Staff List with Activity
     path('staff/', views.staff_list, name='staff_list'),
+    path('staff/<int:pk>/delete/', views.staff_delete, name='staff_delete'),
+    # Staff POS (mobile)
+    path('staff/login/', StaffLoginView.as_view(), name='staff_login'),
+    path('staff/pos/', views.staff_pos, name='staff_pos'),
     
     # Sales Analytics
     path('sales/analytics/', views.sales_analytics, name='sales_analytics'),

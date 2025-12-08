@@ -81,6 +81,30 @@ class FrontendLogoutView(View):
         auth_logout(request)
         return redirect('landing')
 
+
+class StaffLoginView(LoginView):
+    """Login view for staff POS access. Only approved, active staff may login."""
+    template_name = 'clinic/staff_login.html'
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
+        return '/clinic/staff/pos/'
+
+    def form_valid(self, form):
+        user = form.get_user()
+        profile = getattr(user, 'staff_profile', None)
+        if not (user.is_staff and user.is_active and profile and getattr(profile, 'approved', False)):
+            form.add_error(None, 'Account not approved or not a staff account. Please wait for admin approval.')
+            return self.form_invalid(form)
+
+        response = super().form_valid(form)
+        try:
+            self.request.session['staff_authenticated'] = True
+            self.request.session.save()
+        except Exception:
+            pass
+        return response
+
     def post(self, request, *args, **kwargs):
         # Allow logout via POST as well
         request.session.pop('frontend_authenticated', None)

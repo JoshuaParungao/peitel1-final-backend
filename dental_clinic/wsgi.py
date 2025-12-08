@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
 import os
 import sys
 import django
+import logging
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "dental_clinic.settings")
 
@@ -17,29 +18,36 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "dental_clinic.settings")
 django.setup()
 from django.core.wsgi import get_wsgi_application
 
+# Configure a simple logger for startup tasks
+logger = logging.getLogger('startup')
+if not logger.handlers:
+	logging.basicConfig(level=logging.INFO)
+
 # Run startup maintenance tasks automatically on process start.
-# This helps free-tier Render deployments where a shell may not be available.
+# Use logging instead of print to avoid stdout lock issues at interpreter shutdown.
 try:
 	run_startup = os.getenv('RUN_STARTUP_TASKS', 'True')
 	if run_startup.lower() in ('1', 'true', 'yes'):
 		# Import here so settings are loaded
 		from django.core.management import call_command
+
 		# Apply migrations (idempotent)
 		try:
-			print('[startup] Running database migrations...')
-			call_command('migrate', '--noinput')
-			print('[startup] Migrations complete.')
+			logger.info('[startup] Running database migrations...')
+			# Quiet output in production
+			call_command('migrate', '--noinput', verbosity=0)
+			logger.info('[startup] Migrations complete.')
 		except Exception as e:
 			# Log but continue; a failing migrate shouldn't prevent app from starting
-			print(f'[startup] Migrate failed: {e}')
+			logger.exception('[startup] Migrate failed')
 
 		# Collect static files
 		try:
-			print('[startup] Collecting static files...')
-			call_command('collectstatic', '--noinput')
-			print('[startup] Collectstatic complete.')
+			logger.info('[startup] Collecting static files...')
+			call_command('collectstatic', '--noinput', verbosity=0)
+			logger.info('[startup] Collectstatic complete.')
 		except Exception as e:
-			print(f'[startup] Collectstatic failed: {e}')
+			logger.exception('[startup] Collectstatic failed')
 
 		# Create or update admin user if env vars present, otherwise try existing create_superuser command
 		try:
@@ -55,17 +63,17 @@ try:
 				u.email = admin_email
 				u.set_password(admin_pass)
 				u.save()
-				print('[startup] Admin user created/updated:', admin_user)
+				logger.info('[startup] Admin user created/updated: %s', admin_user)
 			else:
 				# Fallback: call repository's create_superuser management command if present
 				try:
-					call_command('create_superuser')
-					print('[startup] Ran create_superuser command')
-				except Exception as e:
-					print(f'[startup] create_superuser command not available or failed: {e}')
-		except Exception as e:
-			print(f'[startup] Admin creation failed: {e}')
-except Exception as e:
-	print(f'[startup] Unexpected error during startup tasks: {e}')
+					call_command('create_superuser', verbosity=0)
+					logger.info('[startup] Ran create_superuser command')
+				except Exception:
+					logger.debug('[startup] create_superuser command not available or failed')
+		except Exception:
+			logger.exception('[startup] Admin creation failed')
+except Exception:
+	logger.exception('[startup] Unexpected error during startup tasks')
 
 application = get_wsgi_application()

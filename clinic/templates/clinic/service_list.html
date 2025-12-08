@@ -25,8 +25,9 @@
                         <td>{{ service.name }}</td>
                         <td>{{ service.category }}</td>
                         <td>₱{{ service.price }}</td>
-                        <td>
-                            <a class="btn edit-btn" href="{% url 'clinic:service_update' service.pk %}">Edit</a>
+                        <td class="actions-cell">
+                            <a class="btn edit-btn small" href="{% url 'clinic:service_update' service.pk %}">Edit</a>
+                            <a class="btn delete-btn small" href="{% url 'clinic:service_delete' service.pk %}" onclick="return confirm('Archive this service and related invoices?')">Archive</a>
                         </td>
                     </tr>
                     {% empty %}
@@ -81,17 +82,7 @@
     background-color: #1669c1;
 }
 
-.edit-btn {
-    background-color: #28a745;
-    color: #fff;
-    padding: 4px 12px;
-    border-radius: 6px;
-    font-size: 14px;
-}
-
-.edit-btn:hover {
-    background-color: #218838;
-}
+/* Button styles are provided globally in app.css */
 
 /* Table Styling */
 .table {
