@@ -9,6 +9,5 @@ services:
       - key: DJANGO_DEBUG
         value: "False"
     postdeploy: |
-      echo "Running migrations and collectstatic"
-      python manage.py migrate --noinput
-      python manage.py collectstatic --noinput
+      echo "Running postdeploy script"
+      /bin/bash ./scripts/postdeploy.sh
